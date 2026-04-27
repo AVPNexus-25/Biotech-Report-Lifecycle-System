@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // material-ui
 import { useTheme } from '@mui/material/styles';
@@ -69,6 +70,17 @@ export default function ProfileSection() {
 
     prevOpen.current = open;
   }, [open]);
+
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // clear auth data
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+
+    // redirect to login
+    navigate('/');
+  };
 
   return (
     <>
@@ -206,7 +218,8 @@ export default function ProfileSection() {
                             }
                           />
                         </ListItemButton> */}
-                        <ListItemButton sx={{ borderRadius: `${borderRadius}px` }}>
+
+                        <ListItemButton sx={{ borderRadius: `${borderRadius}px` }} onClick={handleLogout}>
                           <ListItemIcon>
                             <IconLogout stroke={1.5} size="20px" />
                           </ListItemIcon>

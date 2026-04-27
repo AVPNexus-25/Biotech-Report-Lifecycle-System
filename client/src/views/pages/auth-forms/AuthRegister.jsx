@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 // material-ui
 import Button from '@mui/material/Button';
@@ -24,14 +25,24 @@ import { strengthColor, strengthIndicator } from 'utils/password-strength';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
-// ===========================|| JWT - REGISTER ||=========================== //
-
 export default function AuthRegister() {
+  const navigate = useNavigate();
+
   const [showPassword, setShowPassword] = useState(false);
   const [checked, setChecked] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const [strength, setStrength] = useState(0);
   const [level, setLevel] = useState();
+
+  // ✅ form state
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    password_confirmation: ''
+  });
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
@@ -48,55 +59,122 @@ export default function AuthRegister() {
   };
 
   useEffect(() => {
-    changePassword('123456');
-  }, []);
+    changePassword(form.password);
+  }, [form.password]);
+
+  // ✅ handle input change
+  const handleChange = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  // ✅ submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!checked) {
+      alert('Please accept Terms & Conditions');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const payload = {
+        name: form.firstName + ' ' + form.lastName,
+        email: form.email,
+        password: form.password,
+        password_confirmation: form.password_confirmation
+      };
+
+      const res = await axios.post('http://localhost:5000/api/auth/register', payload);
+
+      alert(res.data.message);
+
+      // 👉 redirect to login
+      navigate('/');
+
+    } catch (err) {
+      alert(err.response?.data?.message || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
+    <form onSubmit={handleSubmit}>
       <Stack sx={{ mb: 2, alignItems: 'center' }}>
-        <Typography variant="subtitle1">Sign up with Email address </Typography>
+        <Typography variant="subtitle1">Sign up with Email address</Typography>
       </Stack>
 
       <Grid container spacing={{ xs: 0, sm: 2 }}>
-        <Grid size={{ xs: 12, sm: 6 }}>
+        <Grid item xs={12} sm={6}>
           <CustomFormControl fullWidth>
-            <InputLabel htmlFor="outlined-adornment-first-register">First Name</InputLabel>
-            <OutlinedInput id="outlined-adornment-first-register" type="text" name="firstName" value="Jhones" />
+            <InputLabel>First Name</InputLabel>
+            <OutlinedInput
+              type="text"
+              name="firstName"
+              value={form.firstName}
+              onChange={handleChange}
+              required
+            />
           </CustomFormControl>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6 }}>
+
+        <Grid item xs={12} sm={6}>
           <CustomFormControl fullWidth>
-            <InputLabel htmlFor="outlined-adornment-last-register">Last Name</InputLabel>
-            <OutlinedInput id="outlined-adornment-last-register" type="text" name="lastName" value="Doe" />
+            <InputLabel>Last Name</InputLabel>
+            <OutlinedInput
+              type="text"
+              name="lastName"
+              value={form.lastName}
+              onChange={handleChange}
+              required
+            />
           </CustomFormControl>
         </Grid>
       </Grid>
+
       <CustomFormControl fullWidth>
-        <InputLabel htmlFor="outlined-adornment-email-register">Email Address / Username</InputLabel>
-        <OutlinedInput id="outlined-adornment-email-register" type="email" value="jones@doe.com" name="email" />
+        <InputLabel>Email Address</InputLabel>
+        <OutlinedInput
+          type="email"
+          name="email"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
       </CustomFormControl>
 
       <CustomFormControl fullWidth>
-        <InputLabel htmlFor="outlined-adornment-password-register">Password</InputLabel>
+        <InputLabel>Password</InputLabel>
         <OutlinedInput
-          id="outlined-adornment-password-register"
           type={showPassword ? 'text' : 'password'}
-          value="Jhones@123"
           name="password"
-          label="Password"
+          value={form.password}
+          onChange={handleChange}
+          required
           endAdornment={
             <InputAdornment position="end">
-              <IconButton
-                aria-label="toggle password visibility"
-                onClick={handleClickShowPassword}
-                onMouseDown={handleMouseDownPassword}
-                edge="end"
-                size="large"
-              >
+              <IconButton onClick={handleClickShowPassword} onMouseDown={handleMouseDownPassword}>
                 {showPassword ? <Visibility /> : <VisibilityOff />}
               </IconButton>
             </InputAdornment>
           }
+        />
+      </CustomFormControl>
+
+      {/* Confirm Password */}
+      <CustomFormControl fullWidth>
+        <InputLabel>Confirm Password</InputLabel>
+        <OutlinedInput
+          type="password"
+          name="password_confirmation"
+          value={form.password_confirmation}
+          onChange={handleChange}
+          required
         />
       </CustomFormControl>
 
@@ -114,12 +192,17 @@ export default function AuthRegister() {
       )}
 
       <FormControlLabel
-        control={<Checkbox checked={checked} onChange={(event) => setChecked(event.target.checked)} name="checked" color="primary" />}
+        control={
+          <Checkbox
+            checked={checked}
+            onChange={(e) => setChecked(e.target.checked)}
+          />
+        }
         label={
           <Typography variant="subtitle1">
-            Agree with &nbsp;
-            <Typography variant="subtitle1" component={Link} to="#">
-              Terms & Condition.
+            Agree with&nbsp;
+            <Typography component={Link} to="#" variant="subtitle1">
+              Terms & Condition
             </Typography>
           </Typography>
         }
@@ -127,11 +210,19 @@ export default function AuthRegister() {
 
       <Box sx={{ mt: 2 }}>
         <AnimateButton>
-          <Button disableElevation fullWidth size="large" type="submit" variant="contained" color="secondary">
-            Sign up
+          <Button
+            disableElevation
+            fullWidth
+            size="large"
+            type="submit"
+            variant="contained"
+            color="secondary"
+            disabled={loading}
+          >
+            {loading ? 'Registering...' : 'Sign up'}
           </Button>
         </AnimateButton>
       </Box>
-    </>
+    </form>
   );
 }

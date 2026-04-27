@@ -5,7 +5,7 @@ const role = require('../middleware/roleMiddleware');
 
 const router = express.Router();
 
-router.post('/', auth, role('admin'), createUser);
+router.post('/register', auth, role('admin'), createUser);
 router.get('/', auth, role('admin'), getUsers);
 
 module.exports = router;
