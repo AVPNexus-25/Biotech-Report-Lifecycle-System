@@ -89,7 +89,8 @@ export default function AuthRegister() {
         password_confirmation: form.password_confirmation
       };
 
-      const res = await axios.post('http://localhost:5000/api/auth/register', payload);
+      const res = await axios.post('http://localhost:5
+      000/api/auth/register', payload);
 
       alert(res.data.message);
 
